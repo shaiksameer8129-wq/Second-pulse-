@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Second Pulse – Organ Donation Awareness (v0.1 prototype)</title>
+<style>
+  :root{--navy:#0b2d54;--teal:#0f9d9a;--red:#d64545;--bg:#f4f7fb;--card:#fff;--ink:#1d2b3a;--mute:#6b7c8f}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Telugu","Noto Sans Devanagari",Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
+  header{background:var(--navy);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+  header h1{font-size:18px;margin:0}
+  select{padding:6px 8px;border-radius:8px;border:0;font-size:14px}
+  main{flex:1;padding:16px 16px 90px}
+  .card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  h2{margin:0 0 8px;color:var(--navy);font-size:20px}
+  h3{margin:0 0 6px;font-size:16px;color:var(--navy)}
+  p{line-height:1.5;margin:6px 0}
+  .tag{font-size:12px;color:var(--mute)}
+  .hero{background:linear-gradient(135deg,var(--navy),#14508f);color:#fff}
+  .hero h2{color:#fff}
+  button,.btn{background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer;width:100%}
+  button.red{background:var(--red)} button.ghost{background:#e6eef7;color:var(--navy)}
+  label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+  input[type=text],input[type=number],input[type=tel],select.f{width:100%;padding:10px;border:1px solid #cfd9e5;border-radius:8px;font-size:15px;background:#fff}
+  .chips label{display:inline-flex;align-items:center;gap:6px;font-weight:500;background:#eef3f9;border-radius:20px;padding:6px 12px;margin:3px 4px 3px 0}
+  nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;display:flex;border-top:1px solid #dde5ee}
+  nav button{background:none;color:var(--mute);border-radius:0;padding:12px 4px;font-size:12px;font-weight:600}
+  nav button.on{color:var(--teal);border-top:3px solid var(--teal)}
+  nav span{display:block;font-size:20px}
+  details{border-bottom:1px solid #e4ebf3;padding:10px 0} summary{font-weight:600;cursor:pointer;color:var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:14px} td,th{padding:8px 4px;border-bottom:1px solid #e4ebf3;text-align:left}
+  .warn{background:#fff6e0;border-left:4px solid #e0a100;padding:10px;border-radius:8px;font-size:13px}
+  .demo{background:#fde8e8;border-left:4px solid var(--red);padding:10px;border-radius:8px;font-size:13px}
+  .pledge{background:linear-gradient(135deg,#0b2d54,#0f9d9a);color:#fff;border-radius:16px;padding:16px;display:flex;justify-content:space-between;gap:10px}
+  .pledge h3{color:#fff}
+  #qr{background:#fff;padding:6px;border-radius:8px;width:96px;height:96px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#333;text-align:center}
+  .bar{height:10px;background:#e4ebf3;border-radius:6px;overflow:hidden;margin:8px 0}
+  .bar div{height:100%;background:var(--teal);width:0;transition:width .5s}
+  .log{font-size:13px;color:var(--mute);padding-left:18px}
+  footer{font-size:11px;color:var(--mute);text-align:center;padding:0 16px 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>♥ Second Pulse</h1>
+    <select id="lang" aria-label="Language">
+      <option value="en">English</option><option value="te">తెలుగు</option><option value="hi">हिन्दी</option>
+    </select>
+  </header>
+  <main id="view"></main>
+  <footer id="foot"></footer>
+  <nav id="nav"></nav>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ---------- Content (add more languages / FAQs here) ---------- */
+const T = {
+ en:{nav:["Home","Pledge","Learn","SOS demo"],
+  tag:"One heart. One life. A chance to save many.",
+  homeH:"Why it matters",
+  homeP:"Thousands of people in India wait for a transplant, and far fewer organs are donated than needed. Exact numbers change every year — check NOTTO's latest official data before quoting any figure.",
+  homeBtn:"Make my pledge", learnBtn:"Learn the facts",
+  steps:["1. Learn the facts","2. Talk to your family","3. Save your pledge here","4. Register officially with NOTTO / your state authority"],
+  pledgeH:"Donor pledge", name:"Full name", age:"Age", blood:"Blood group", organs:"Organs / tissues I wish to pledge",
+  org:["Kidney","Liver","Heart","Lungs","Pancreas","Cornea","Skin"],
+  fam:"Family contact name", famPh:"Family contact phone",
+  consent:"I have discussed my decision with my family", save:"Save my pledge", del:"Delete my pledge",
+  saved:"Pledge saved on this device.", need:"Please enter name and age (18+), and confirm you spoke to your family.",
+  cardH:"Digital Pledge Card", pid:"Pledge ID", nonOff:"Personal record — not an official registry. Register at notto.mohfw.gov.in",
+  privacy:"Your data stays on this device (browser storage). The QR contains only the Pledge ID.",
+  learnH:"Learn", faqH:"Common questions", timeH:"Why time matters",
+  timeP:"Organs can only stay healthy outside the body for a limited time, so hospitals move fast. These are rough textbook ranges and NOT a countdown — viability depends on the organ, preservation method and clinical situation. Only authorised transplant teams decide.",
+  org2:["Heart","Lungs","Liver","Kidney","Cornea"], win:["4–6 hours","4–8 hours","8–12 hours","24–36 hours","Up to 14 days"],
+  sosH:"Emergency coordination (demo)", sosDemo:"DEMO ONLY — simulated data. A real organ-alert system must be run by hospitals/transplant authorities, never by the public. No real alert is sent.",
+  hosp:"Sample hospital (not verified)", organ:"Organ", send:"Send demo alert", eta:"Simulated ambulance ETA", min:"min", logH:"Alert log", arrived:"Arrived (simulated)",
+  foot:"Awareness & technology concept by a student project. Not a medical service or organ-allocation authority."},
+ te:{nav:["హోమ్","ప్రతిజ్ఞ","తెలుసుకోండి","SOS డెమో"],
+  tag:"ఒక గుండె. ఒక ప్రాణం. ఎందరినో కాపాడే అవకాశం.",
+  homeH:"ఇది ఎందుకు ముఖ్యం",
+  homeP:"భారతదేశంలో వేలాది మంది ట్రాన్స్‌ప్లాంట్ కోసం ఎదురుచూస్తున్నారు, కానీ దానం చేసే అవయవాలు చాలా తక్కువ. గణాంకాలు ప్రతి సంవత్సరం మారుతాయి — ఉపయోగించే ముందు NOTTO తాజా అధికారిక వివరాలు చూడండి.",
+  homeBtn:"నా ప్రతిజ్ఞ చేయండి", learnBtn:"వాస్తవాలు తెలుసుకోండి",
+  steps:["1. వాస్తవాలు తెలుసుకోండి","2. మీ కుటుంబంతో మాట్లాడండి","3. ఇక్కడ ప్రతిజ్ఞ సేవ్ చేయండి","4. NOTTO / మీ రాష్ట్ర అథారిటీలో అధికారికంగా నమోదు చేసుకోండి"],
+  pledgeH:"దాత ప్రతిజ్ఞ", name:"పూర్తి పేరు", age:"వయస్సు", blood:"రక్త గ్రూపు", organs:"నేను ప్రతిజ్ఞ చేసే అవయవాలు / కణజాలాలు",
+  org:["మూత్రపిండం","కాలేయం","గుండె","ఊపిరితిత్తులు","క్లోమం","కార్నియా","చర్మం"],
+  fam:"కుటుంబ సభ్యుని పేరు", famPh:"కుటుంబ సభ్యుని ఫోన్",
+  consent:"నా నిర్ణయాన్ని నా కుటుంబంతో చర్చించాను", save:"ప్రతిజ్ఞ సేవ్ చేయండి", del:"ప్రతిజ్ఞ తొలగించండి",
+  saved:"ప్రతిజ్ఞ ఈ పరికరంలో సేవ్ అయింది.", need:"దయచేసి పేరు, వయస్సు (18+) నమోదు చేసి, కుటుంబంతో మాట్లాడినట్లు నిర్ధారించండి.",
+  cardH:"డిజిటల్ ప్రతిజ్ఞ కార్డు", pid:"ప్రతిజ్ఞ ID", nonOff:"వ్యక్తిగత రికార్డు — అధికారిక రిజిస్ట్రీ కాదు. notto.mohfw.gov.in లో నమోదు చేయండి",
+  privacy:"మీ డేటా ఈ పరికరంలోనే ఉంటుంది. QR లో ప్రతిజ్ఞ ID మాత్రమే ఉంటుంది.",
+  learnH:"తెలుసుకోండి", faqH:"సాధారణ ప్రశ్నలు", timeH:"సమయం ఎందుకు ముఖ్యం",
+  timeP:"అవయవాలు శరీరం బయట పరిమిత సమయం మాత్రమే ఆరోగ్యంగా ఉంటాయి, అందుకే ఆసుపత్రులు వేగంగా పనిచేస్తాయి. ఇవి సుమారు పరిధులు మాత్రమే, కౌంట్‌డౌన్ కాదు — అవయవం, భద్రపరిచే పద్ధతి, వైద్య పరిస్థితిపై ఆధారపడి ఉంటుంది. అధికారిక ట్రాన్స్‌ప్లాంట్ బృందాలే నిర్ణయిస్తాయి.",
+  org2:["గుండె","ఊపిరితిత్తులు","కాలేయం","మూత్రపిండాలు","కార్నియా"], win:["4–6 గంటలు","4–8 గంటలు","8–12 గంటలు","24–36 గంటలు","14 రోజుల వరకు"],
+  sosH:"అత్యవసర సమన్వయం (డెమో)", sosDemo:"డెమో మాత్రమే — నకిలీ డేటా. నిజమైన అవయవ అలర్ట్ వ్యవస్థను ఆసుపత్రులు/ట్రాన్స్‌ప్లాంట్ అథారిటీలే నడపాలి, ప్రజలు కాదు. ఎలాంటి నిజమైన అలర్ట్ పంపబడదు.",
+  hosp:"నమూనా ఆసుపత్రి (ధృవీకరించబడలేదు)", organ:"అవయవం", send:"డెమో అలర్ట్ పంపండి", eta:"అనుకరణ అంబులెన్స్ ETA", min:"నిమి", logH:"అలర్ట్ లాగ్", arrived:"చేరుకుంది (అనుకరణ)",
+  foot:"విద్యార్థి ప్రాజెక్ట్ — అవగాహన & సాంకేతిక భావన. వైద్య సేవ లేదా అవయవ కేటాయింపు అథారిటీ కాదు."},
+ hi:{nav:["होम","संकल्प","जानें","SOS डेमो"],
+  tag:"एक दिल. एक जीवन. कई जिंदगियां बचाने का मौका.",
+  homeH:"यह क्यों ज़रूरी है",
+  homeP:"भारत में हज़ारों लोग ट्रांसप्लांट का इंतज़ार कर रहे हैं, लेकिन दान किए गए अंग बहुत कम हैं। आंकड़े हर साल बदलते हैं — उपयोग से पहले NOTTO के ताज़ा आधिकारिक आंकड़े देखें।",
+  homeBtn:"मेरा संकल्प", learnBtn:"तथ्य जानें",
+  steps:["1. तथ्य जानें","2. परिवार से बात करें","3. यहां संकल्प सहेजें","4. NOTTO / अपने राज्य प्राधिकरण में आधिकारिक पंजीकरण करें"],
+  pledgeH:"दाता संकल्प", name:"पूरा नाम", age:"उम्र", blood:"ब्लड ग्रुप", organs:"जिन अंगों/ऊतकों का संकल्प लेना है",
+  org:["किडनी","लिवर","हृदय","फेफड़े","अग्न्याशय","कॉर्निया","त्वचा"],
+  fam:"परिवार के सदस्य का नाम", famPh:"परिवार के सदस्य का फ़ोन",
+  consent:"मैंने अपने फैसले पर परिवार से बात की है", save:"संकल्प सहेजें", del:"संकल्प हटाएं",
+  saved:"संकल्प इस डिवाइस पर सहेजा गया।", need:"कृपया नाम, उम्र (18+) भरें और परिवार से बात करने की पुष्टि करें।",
+  cardH:"डिजिटल संकल्प कार्ड", pid:"संकल्प ID", nonOff:"निजी रिकॉर्ड — आधिकारिक रजिस्ट्री नहीं। notto.mohfw.gov.in पर पंजीकरण करें",
+  privacy:"आपका डेटा इसी डिवाइस पर रहता है। QR में केवल संकल्प ID है।",
+  learnH:"जानें", faqH:"आम सवाल", timeH:"समय क्यों मायने रखता है",
+  timeP:"अंग शरीर के बाहर सीमित समय तक ही स्वस्थ रहते हैं, इसलिए अस्पताल तेज़ी से काम करते हैं। ये मोटे अनुमान हैं, काउंटडाउन नहीं — यह अंग, संरक्षण विधि और चिकित्सकीय स्थिति पर निर्भर है। केवल अधिकृत ट्रांसप्लांट टीम ही निर्णय लेती है।",
+  org2:["हृदय","फेफड़े","लिवर","किडनी","कॉर्निया"], win:["4–6 घंटे","4–8 घंटे","8–12 घंटे","24–36 घंटे","14 दिन तक"],
+  sosH:"आपातकालीन समन्वय (डेमो)", sosDemo:"केवल डेमो — नकली डेटा। असली अंग-अलर्ट प्रणाली अस्पताल/ट्रांसप्लांट प्राधिकरण चलाएं, आम जनता नहीं। कोई असली अलर्ट नहीं भेजा जाता।",
+  hosp:"नमूना अस्पताल (सत्यापित नहीं)", organ:"अंग", send:"डेमो अलर्ट भेजें", eta:"अनुमानित एम्बुलेंस ETA", min:"मिनट", logH:"अलर्ट लॉग", arrived:"पहुंच गई (सिमुलेशन)",
+  foot:"छात्र प्रोजेक्ट — जागरूकता व तकनीकी अवधारणा। यह चिकित्सा सेवा या अंग-आवंटन प्राधिकरण नहीं है।"}
+};
+
+const FAQ = {
+ en:[
+  ["What is organ donation?","Giving an organ or tissue to save or improve another person's life. It can happen after death (deceased donation) or, for some organs such as a kidney, while alive (living donation)."],
+  ["Does a pledge guarantee donation?","No. A pledge states your wish. Donation after death happens only after doctors confirm death by the authorised procedure, and hospitals seek your family's consent — so tell your family."],
+  ["Can organs be bought or sold?","No. Buying or selling organs is illegal in India under the THOTA law. Donation needs no broker and no payment from the donor's family."],
+  ["Who can pledge?","Any adult can pledge. Medical suitability is decided by doctors at the time, not by age alone."],
+  ["Where do I register officially?","With NOTTO (notto.mohfw.gov.in) or your state's transplant authority. This app's pledge is a personal, non-official record."]],
+ te:[
+  ["అవయవ దానం అంటే ఏమిటి?","మరొకరి ప్రాణాన్ని కాపాడటానికి లేదా వారి జీవితాన్ని మెరుగుపరచడానికి అవయవం/కణజాలం ఇవ్వడం. ఇది మరణానంతరం, లేదా మూత్రపిండం వంటి కొన్ని అవయవాలకు జీవించి ఉండగా కూడా జరగవచ్చు."],
+  ["ప్రతిజ్ఞ చేస్తే దానం ఖాయమేనా?","కాదు. ప్రతిజ్ఞ మీ కోరికను తెలియజేస్తుంది. అధికారిక పద్ధతిలో వైద్యులు మరణాన్ని నిర్ధారించిన తర్వాతే దానం జరుగుతుంది, ఆసుపత్రి మీ కుటుంబ అనుమతి కోరుతుంది — కాబట్టి మీ కుటుంబానికి చెప్పండి."],
+  ["అవయవాలను కొనవచ్చా, అమ్మవచ్చా?","కాదు. భారతదేశంలో THOTA చట్టం ప్రకారం అవయవాల కొనుగోలు/అమ్మకం చట్టవిరుద్ధం. దళారీ అవసరం లేదు, దాత కుటుంబం ఏమీ చెల్లించనవసరం లేదు."],
+  ["ఎవరు ప్రతిజ్ఞ చేయవచ్చు?","ఏ వయోజనుడైనా చేయవచ్చు. వైద్య అర్హతను ఆ సమయంలో వైద్యులు నిర్ణయిస్తారు, వయస్సు మాత్రమే కాదు."],
+  ["అధికారికంగా ఎక్కడ నమోదు చేయాలి?","NOTTO (notto.mohfw.gov.in) లేదా మీ రాష్ట్ర ట్రాన్స్‌ప్లాంట్ అథారిటీలో. ఈ యాప్ ప్రతిజ్ఞ వ్యక్తిగత, అనధికార రికార్డు మాత్రమే."]],
+ hi:[
+  ["अंगदान क्या है?","किसी की जान बचाने या जीवन बेहतर बनाने के लिए अंग या ऊतक देना। यह मृत्यु के बाद, या किडनी जैसे कुछ अंगों के लिए जीवित रहते हुए भी हो सकता है।"],
+  ["क्या संकल्प से दान पक्का हो जाता है?","नहीं। संकल्प आपकी इच्छा बताता है। अधिकृत प्रक्रिया से डॉक्टरों द्वारा मृत्यु की पुष्टि के बाद ही दान होता है और अस्पताल परिवार की सहमति लेता है — इसलिए परिवार को ज़रूर बताएं।"],
+  ["क्या अंग खरीदे-बेचे जा सकते हैं?","नहीं। भारत में THOTA कानून के तहत अंगों की खरीद-बिक्री अवैध है। किसी दलाल की ज़रूरत नहीं और दाता परिवार को कोई भुगतान नहीं करना होता।"],
+  ["कौन संकल्प ले सकता है?","कोई भी वयस्क। चिकित्सकीय उपयुक्तता डॉक्टर उसी समय तय करते हैं, सिर्फ़ उम्र से नहीं।"],
+  ["आधिकारिक पंजीकरण कहां करें?","NOTTO (notto.mohfw.gov.in) या अपने राज्य के ट्रांसप्लांट प्राधिकरण में। इस ऐप का संकल्प एक निजी, अनौपचारिक रिकॉर्ड है।"]]
+};
+
+const BLOOD=["A+","A−","B+","B−","AB+","AB−","O+","O−"];
+const HOSPITALS=["Sample Hospital A","Sample Hospital B","Sample Hospital C"];
+
+/* ---------- State & storage ---------- */
+let lang = safeGet("sp_lang") || "en", tab = 0, eta=null, timer=null, logs=[];
+function safeGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function safeSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function safeDel(k){try{localStorage.removeItem(k)}catch(e){}}
+function getPledge(){try{return JSON.parse(safeGet("sp_pledge")||"null")}catch(e){return null}}
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=id=>document.getElementById(id);
+
+/* ---------- Views ---------- */
+function render(){
+  const t=T[lang]; document.documentElement.lang=lang; $("lang").value=lang;
+  $("nav").innerHTML=["🏠","📝","📚","🚑"].map((ic,i)=>`<button class="${i===tab?'on':''}" onclick="go(${i})"><span>${ic}</span>${t.nav[i]}</button>`).join("");
+  $("foot").textContent=t.foot;
+  $("view").innerHTML=[home,pledge,learn,sos][tab](t);
+  if(tab===1) drawQR();
+}
+function go(i){tab=i;render();scrollTo(0,0)}
+
+function home(t){return `
+ <div class="card hero"><h2>Second Pulse</h2><p>${t.tag}</p></div>
+ <div class="card"><h3>${t.homeH}</h3><p>${t.homeP}</p>
+   <button onclick="go(1)">${t.homeBtn}</button><div style="height:8px"></div><button class="ghost" onclick="go(2)">${t.learnBtn}</button></div>
+ <div class="card">${t.steps.map(s=>`<p>${s}</p>`).join("")}</div>`}
+
+function pledge(t){
+  const p=getPledge();
+  const card=p?`<div class="pledge"><div><h3>${t.cardH}</h3><p><b>${esc(p.name)}</b><br>${esc(p.blood)} · ${esc(p.age)}<br>${p.organs.map(i=>esc(t.org[i])).join(", ")||"—"}</p>
+    <p class="tag" style="color:#cfe">${t.pid}: ${esc(p.id)}</p></div><div id="qr"></div></div>
+    <p class="tag">${t.nonOff}</p>`:"";
+  return `${card}
+  <div class="card"><h2>${t.pledgeH}</h2>
+   <label>${t.name}</label><input type="text" id="f_name" value="${esc(p?.name)}">
+   <label>${t.age}</label><input type="number" id="f_age" min="18" max="100" value="${esc(p?.age)}">
+   <label>${t.blood}</label><select class="f" id="f_blood">${BLOOD.map(b=>`<option ${p?.blood===b?'selected':''}>${b}</option>`).join("")}</select>
+   <label>${t.organs}</label><div class="chips">${t.org.map((o,i)=>`<label><input type="checkbox" class="f_org" value="${i}" ${p?.organs.includes(i)?'checked':''}>${o}</label>`).join("")}</div>
+   <label>${t.fam}</label><input type="text" id="f_fam" value="${esc(p?.fam)}">
+   <label>${t.famPh}</label><input type="tel" id="f_famph" value="${esc(p?.famph)}">
+   <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="f_consent" ${p?'checked':''}>${t.consent}</label>
+   <div style="height:10px"></div><button onclick="savePledge()">${t.save}</button>
+   ${p?`<div style="height:8px"></div><button class="ghost" onclick="delPledge()">${t.del}</button>`:""}
+   <p class="tag" id="msg"></p><p class="tag">🔒 ${t.privacy}</p></div>`}
+
+function savePledge(){
+  const t=T[lang], name=$("f_name").value.trim(), age=+$("f_age").value;
+  if(!name||age<18||age>100||!$("f_consent").checked){$("msg").textContent=t.need;return}
+  const old=getPledge();
+  const p={id:old?.id||"SP-"+Math.random().toString(36).slice(2,8).toUpperCase(),name,age,blood:$("f_blood").value,
+    organs:[...document.querySelectorAll(".f_org:checked")].map(x=>+x.value),fam:$("f_fam").value.trim(),famph:$("f_famph").value.trim()};
+  safeSet("sp_pledge",JSON.stringify(p)); render(); $("msg").textContent=t.saved;
+}
+function delPledge(){safeDel("sp_pledge");render()}
+function drawQR(){
+  const p=getPledge(), el=$("qr"); if(!p||!el)return;
+  if(window.QRCode){new QRCode(el,{text:"SECOND-PULSE:"+p.id,width:84,height:84})} else el.textContent=p.id;
+}
+
+function learn(t){return `
+ <div class="card"><h2>${t.learnH}</h2><h3>${t.faqH}</h3>
+  ${FAQ[lang].map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join("")}</div>
+ <div class="card"><h3>${t.timeH}</h3><p>${t.timeP}</p>
+  <table>${t.org2.map((o,i)=>`<tr><td>${o}</td><td>${t.win[i]}</td></tr>`).join("")}</table></div>`}
+
+function sos(t){return `
+ <div class="card"><h2>${t.sosH}</h2><div class="demo">${t.sosDemo}</div>
+  <label>${t.hosp}</label><select class="f" id="s_h">${HOSPITALS.map(h=>`<option>${h}</option>`).join("")}</select>
+  <label>${t.organ}</label><select class="f" id="s_o">${t.org2.map(o=>`<option>${o}</option>`).join("")}</select>
+  <div style="height:10px"></div><button class="red" onclick="sendDemo()">🚨 ${t.send}</button>
+  <div id="track"></div>
+  <h3 style="margin-top:14px">${t.logH}</h3><ul class="log" id="log"></ul></div>`}
+
+function sendDemo(){
+  const t=T[lang]; clearInterval(timer); eta=42; const total=42;
+  logs.unshift(`${new Date().toLocaleTimeString()} — ${$("s_o").value} → ${$("s_h").value} (DEMO)`);
+  const draw=()=>{ if(!$("track"))return;
+    $("track").innerHTML=`<p><b>${t.eta}:</b> ${eta>0?eta+" "+t.min:t.arrived}</p><div class="bar"><div style="width:${(total-eta)/total*100}%"></div></div>`;
+    $("log").innerHTML=logs.map(l=>`<li>${esc(l)}</li>`).join("")};
+  draw();
+  timer=setInterval(()=>{eta--; draw(); if(eta<=0)clearInterval(timer)},700); // 1 simulated minute = 0.7 s
+}
+
+$("lang").addEventListener("change",e=>{lang=e.target.value;safeSet("sp_lang",lang);render()});
+render();
+</script>
+</body>
+</html>
